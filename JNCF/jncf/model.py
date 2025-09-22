@@ -89,12 +89,3 @@ class Module(nn.Module):
             out_features=1,
         )
         self.logit_layer = nn.Linear(**kwargs)
-
-    def _generate_layers(self, hidden):
-        idx = 1
-        while idx < len(hidden):
-            yield nn.Linear(hidden[idx-1], hidden[idx])
-            yield nn.LayerNorm(hidden[idx])
-            yield nn.ReLU()
-            yield nn.Dropout(self.dropout)
-            idx += 1
