@@ -1,5 +1,7 @@
 import torch
 import torch.nn as nn
+from .rl import RepresentationFunction
+from .ml import MatchingFunction
 
 
 class Module(nn.Module):
@@ -60,82 +62,34 @@ class Module(nn.Module):
         return pred
 
     def score(self, user_idx, item_idx):
-        pred_vector = self.ml(user_idx, item_idx)
+        rep_user, rep_item = self.rl(user_idx, item_idx)
+        pred_vector = self.ml(rep_user, rep_item)
         logit = self.logit_layer(pred_vector).squeeze(-1)
         return logit
 
-    def ml(self, user_idx, item_idx):
-        rep_user, rep_item = self.rl(user_idx, item_idx)
-
-        concat = torch.cat(
-            tensors=(rep_user, rep_item), 
-            dim=-1
-        )
-        pred_vector = self.mlp_layers(concat)
-
-        return pred_vector        
-
-    def rl(self, user_idx, item_idx):
-        rep_user = self.user(user_idx, item_idx)
-        rep_item = self.item(user_idx, item_idx)
-        return rep_user, rep_item
-
-    def user(self, user_idx, item_idx):
-        # get user vector from interactions
-        user_slice = self.interactions[user_idx, :-1].clone()
-
-        # masking target items
-        user_batch = torch.arange(user_idx.size(0))
-        user_slice[user_batch, item_idx] = 0
-
-        # projection
-        proj_user = self.proj_u(user_slice.float())
-
-        # representation learning
-        rep_user = self.mlp_u(proj_user)
-
-        return rep_user
-
-    def item(self, user_idx, item_idx):
-        # get item vector from interactions
-        item_slice = self.interactions.T[item_idx, :-1].clone()
-
-        # masking target users
-        item_batch = torch.arange(item_idx.size(0))
-        item_slice[item_batch, user_idx] = 0
-
-        # projection
-        proj_item = self.proj_i(item_slice.float())
-
-        # representation learning
-        rep_item = self.mlp_i(proj_item)
-
-        return rep_item
-
     def _init_layers(self):
-        self.proj_u = nn.Linear(
-            in_features=self.n_items,
-            out_features=self.hidden[0],
-            bias=False,
+        kwargs = dict(
+            n_users=self.n_users,
+            n_items=self.n_items,
+            n_factors=self.n_factors,
+            hidden=self.hidden_rl,
+            dropout=self.dropout,
+            interactions=self.interactions,
         )
-        self.proj_i = nn.Linear(
-            in_features=self.n_users,
-            out_features=self.hidden[0],
-            bias=False,
+        self.rl = RepresentationFunction(**kwargs)
+        
+        kwargs = dict(
+            n_factors=self.n_factors,
+            hidden=self.hidden_ml,
+            dropout=self.dropout,
         )
-        self.mlp_u = nn.Sequential(
-            *list(self._generate_layers(self.hidden_rl))
-        )
-        self.mlp_i = nn.Sequential(
-            *list(self._generate_layers(self.hidden_rl))
-        )
-        self.mlp_layers = nn.Sequential(
-            *list(self._generate_layers(self.hidden_ml))
-        )
-        self.logit_layer = nn.Linear(
-            in_features=self.hidden[-1],
+        self.ml = MatchingFunction(**kwargs)
+        
+        kwargs = dict(
+            in_features=self.hidden_ml[-1],
             out_features=1,
         )
+        self.logit_layer = nn.Linear(**kwargs)
 
     def _generate_layers(self, hidden):
         idx = 1
@@ -145,12 +99,3 @@ class Module(nn.Module):
             yield nn.ReLU()
             yield nn.Dropout(self.dropout)
             idx += 1
-
-    def _assert_arg_error(self):
-        CONDITION = (self.hidden_rl[-1] == self.n_factors)
-        ERROR_MESSAGE = f"Last representation function layer must match input size: {self.n_factors * 2}"
-        assert CONDITION, ERROR_MESSAGE
-
-        CONDITION = (self.hidden_ml[0] == self.n_factors * 2)
-        ERROR_MESSAGE = f"First matching function layer must match input size: {self.n_factors * 2}"
-        assert CONDITION, ERROR_MESSAGE
