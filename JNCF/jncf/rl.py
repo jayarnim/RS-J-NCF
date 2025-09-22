@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 
 
-class RepresentationFunction(nn.Module):
+class Module(nn.Module):
     def __init__(
         self,
         n_users: int,
@@ -12,7 +12,7 @@ class RepresentationFunction(nn.Module):
         dropout: float,
         interactions: torch.Tensor, 
     ):
-        super(RepresentationFunction, self).__init__()
+        super(Module, self).__init__()
         # attr dictionary for load
         self.init_args = locals().copy()
         del self.init_args["self"]
