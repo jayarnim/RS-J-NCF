@@ -11,6 +11,7 @@ class Module(nn.Module):
     ):
         super(Module, self).__init__()
         # attr dictionary for load
+
         self.init_args = locals().copy()
         del self.init_args["self"]
         del self.init_args["__class__"]
@@ -24,7 +25,7 @@ class Module(nn.Module):
         self._assert_arg_error()
 
         # generate layers
-        self._init_layers()
+        self._set_up_components()
 
     def forward(
         self, 
@@ -39,12 +40,14 @@ class Module(nn.Module):
         pred_vector = self.mlp_layers(concat)
         return pred_vector 
 
-    def _init_layers(self):
-        self.mlp_layers = nn.Sequential(
-            *list(self._generate_layers(self.hidden))
-        )
+    def _set_up_components(self):
+        self._create_layers()
 
-    def _generate_layers(self, hidden):
+    def _create_layers(self):
+        components = list(self._yield_layers(self.hidden))
+        self.mlp_layers = nn.Sequential(*components)
+
+    def _yield_layers(self, hidden):
         idx = 1
         while idx < len(hidden):
             yield nn.Linear(hidden[idx-1], hidden[idx])
