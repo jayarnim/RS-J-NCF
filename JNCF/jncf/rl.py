@@ -41,11 +41,11 @@ class Module(nn.Module):
         user_idx: torch.Tensor, 
         item_idx: torch.Tensor,
     ):
-        rep_user = self.user(user_idx, item_idx)
-        rep_item = self.item(user_idx, item_idx)
+        rep_user = self.user_hist_embed_generator(user_idx, item_idx)
+        rep_item = self.item_hist_embed_generator(user_idx, item_idx)
         return rep_user, rep_item
 
-    def user(self, user_idx, item_idx):
+    def user_hist_embed_generator(self, user_idx, item_idx):
         # get user vector from interactions
         user_slice = self.interactions[user_idx, :-1].clone()
 
@@ -61,7 +61,7 @@ class Module(nn.Module):
 
         return rep_user
 
-    def item(self, user_idx, item_idx):
+    def item_hist_embed_generator(self, user_idx, item_idx):
         # get item vector from interactions
         item_slice = self.interactions.T[item_idx, :-1].clone()
 
