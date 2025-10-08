@@ -29,11 +29,11 @@ class Module(nn.Module):
 
     def forward(
         self, 
-        rep_user: torch.Tensor, 
-        rep_item: torch.Tensor,
+        user_embed: torch.Tensor, 
+        item_embed: torch.Tensor,
     ):
         kwargs = dict(
-            tensors=(rep_user, rep_item), 
+            tensors=(user_embed, item_embed), 
             dim=-1,
         )
         concat = torch.cat(**kwargs)

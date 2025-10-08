@@ -62,8 +62,8 @@ class Module(nn.Module):
         return pred
 
     def score(self, user_idx, item_idx):
-        rep_user, rep_item = self.rl(user_idx, item_idx)
-        pred_vector = self.ml(rep_user, rep_item)
+        user_embed_slice, item_embed_slice = self.rl(user_idx, item_idx)
+        pred_vector = self.ml(user_embed_slice, item_embed_slice)
         logit = self.logit_layer(pred_vector).squeeze(-1)
         return logit
 
