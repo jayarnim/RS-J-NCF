@@ -12,12 +12,7 @@ class Module(nn.Module):
         dropout: float,
         interactions: torch.Tensor, 
     ):
-        super(Module, self).__init__()
-
-        # attr dictionary for load
-        self.init_args = locals().copy()
-        del self.init_args["self"]
-        del self.init_args["__class__"]
+        super().__init__()
 
         # global attr
         self.n_users = n_users

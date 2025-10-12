@@ -9,12 +9,7 @@ class Module(nn.Module):
         hidden: list,
         dropout: float,
     ):
-        super(Module, self).__init__()
-        # attr dictionary for load
-
-        self.init_args = locals().copy()
-        del self.init_args["self"]
-        del self.init_args["__class__"]
+        super().__init__()
 
         # global attr
         self.n_factors = n_factors
@@ -37,7 +32,7 @@ class Module(nn.Module):
             dim=-1,
         )
         concat = torch.cat(**kwargs)
-        pred_vector = self.mlp_layers(concat)
+        pred_vector = self.matching_fn(concat)
         return pred_vector 
 
     def _set_up_components(self):
@@ -45,7 +40,7 @@ class Module(nn.Module):
 
     def _create_layers(self):
         components = list(self._yield_layers(self.hidden))
-        self.mlp_layers = nn.Sequential(*components)
+        self.matching_fn = nn.Sequential(*components)
 
     def _yield_layers(self, hidden):
         idx = 1
