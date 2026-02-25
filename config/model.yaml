@@ -1,0 +1,4 @@
+projection_dim: 256
+hidden_dim_rl: [128, 64, 32]
+hidden_dim_ml: [64, 32, 16]
+dropout: 0.2
